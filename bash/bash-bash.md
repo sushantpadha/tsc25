@@ -1,6 +1,13 @@
 # TSC TIME
 ## sudo bash bash bash
 
+> [!warning]
+> Intended to be a (1) review of general bash quirks so you hurt your head in the exam and (2) some tips learned through painstaking manual reading, which maybe won't leave the same impression unless you go through the manual reading rituals yourself.
+>
+> Don't try to use this to learn new things. Only to gain confidence in what you already know :D.
+>
+> Based on my notes, cleaned and polished by Claude.
+
 ### bash basics
 
 - **`echo -e`** enables escape chars — `\e[31m`=red, `32m`=green, `34m`=blue, `0m`=reset
@@ -80,7 +87,7 @@ Print all using **`env`**
 
 ### conditional love
 
-> [!note] **Always use spaces inside `[ ]` and `[[ ]]` — bash tokenizes on whitespace**
+> [!warning] **Always use spaces inside `[ ]` and `[[ ]]` — bash tokenizes on whitespace**
 
 | Feature | `[ ]` | `[[ ]]` | `(( ))` |
 | --- | --- | --- | --- |
@@ -92,7 +99,7 @@ Print all using **`env`**
 | File tests | `-f -d -e` | `-f -d -e` | NO |
 | `$` prefix | required | preferred | not needed |
 
-> [!note]
+> [!warning]
 > In `[[ ]]`, `>` and `<` are **lexicographic** — `[[ 10 > 2 ]]` is false. Use `-gt`/`-lt` for numbers.
 
 String tests: **`-z`** empty, **`-n`** non-empty
@@ -108,15 +115,16 @@ let "a++"          # a=10
 declare -i num     # forces integer; num="asdf" → 0, num=7.5 → error
 ```
 
-> [!note] **`(( ))` vs `$(( ))`**
+> [!warning] **`(( ))` vs `$(( ))`**
 
 **`(( ))`** — evaluates, returns exit status (nonzero result = true, zero = false)
 ```bash
 if (( a > b )); then echo "yes"; fi
 
 y=1
-(( y+=1 )) && echo "non-zero" || echo "zero"   # non-zero
-(( y-=2 )) && echo "non-zero" || echo "zero"   # zero
+(( y+=1 )) && echo "non-zero" || echo "zero"   # y=2 → non-zero
+(( y-=2 )) && echo "non-zero" || echo "zero"   # y=0 → zero
+(( y+=3 )) && echo "non-zero" || echo "zero"   # y=3 → non-zero
 ```
 
 **`$(( ))`** — evaluates and **returns the value**
@@ -139,7 +147,7 @@ echo "(5/3 + 1) * 3 ; 5 < 3 ; 10 > 2" | bc  # 6 / 0 / 1
 
 **`-l`** loads mathlib: `s(x)` `c(x)` `l(x)` `e(x)` `a(x)` = sin, cos, log, exp, arctan; also `sqrt(x)`
 
-> [!note]
+> [!warning]
 > ```
 > exit code 0 == SUCCESS == TRUE
 > exit code 1 == FAILURE == FALSE
@@ -176,10 +184,17 @@ for i in "${arr[@]}"; do echo "$i"; done        # iterate array safely
 
 ```bash
 a=5
-while (( a < 7 )); do echo $((a++)); done   # 5 6 ; a=7
+while (( a < 7 )); do echo $((a++)); done
+# 5
+# 6
+# (a=7, loop exits)
 
 b=5
-until (( b > 7 )); do echo $((b++)); done   # 5 6 7 ; b=8
+until (( b > 7 )); do echo $((b++)); done
+# 5
+# 6
+# 7
+# (b=8, loop exits)
 ```
 
 ---
@@ -209,6 +224,8 @@ factorial() {
 
 #### Reading input
 
+See `read.sh` for live examples!
+
 ```bash
 while IFS= read -r line; do    # IFS= preserves leading whitespace
     echo "$line"
@@ -224,13 +241,83 @@ done < "$file"
 | `-s` | silent (passwords) |
 | `-t N` | timeout N seconds |
 
-> [!note] **Heredoc vs herestring**
+> [!warning] **Heredoc vs herestring**
 > ```bash
 > cmd <<EOF          # heredoc — multi-line, var expansion on
 > cmd <<"EOF"        # heredoc — var expansion OFF
 > cmd <<< "string"   # herestring — single string
 > ```
-> **Split CSV into array:** `IFS=',' read -ra arr <<< "a,b,c"`
+
+**Split CSV into array:** `IFS=',' read -ra arr <<< "a,b,c"`
+
+#### `read` gotchas
+
+**`IFS` only affects `read`'s own splitting — nothing else in the loop body**
+```bash
+while IFS=':' read -r a b c; do
+    echo "$a $b $c"   # ✅ split on :
+    awk '{print $1}'  # ❌ awk doesn't know about IFS
+done < file
+```
+`IFS=':' read` is a prefix assignment — IFS is `:` only for that one `read` call. A bare `IFS=':'` on its own line persists for the whole session and affects bash word splitting everywhere.
+
+**Last field not read when using `read -d'DELIM'`**
+
+`-d` sets the terminator — `read` returns nonzero if it hits EOF before finding it, which is guaranteed for the last field if input doesn't end with the delimiter. The `while` loop then exits, dropping it.
+
+```bash
+# "dede" never printed — no trailing ';' so last read returns nonzero
+while IFS= read -r -d';' field; do
+    echo "$field"
+done <<< "asdf;baba;dede"
+# asdf
+# baba
+# (dede dropped)
+
+# fix: || catch the last incomplete read
+while IFS= read -r -d';' field || [[ -n "$field" ]]; do
+    echo "$field"
+done <<< "asdf;baba;dede"
+# asdf
+# baba
+# dede
+
+# or just terminate the data: "asdf;baba;dede;" — all reads succeed cleanly
+```
+
+#### AWK one-liners for string tasks (bash contrast)
+
+**The `$1=$1` trick** — assigning any field forces `$0` to rebuild using `OFS`:
+```bash
+echo "a,b,c,d"         | awk 'BEGIN{FS=","; OFS="\t"} {$1=$1; print}'  # CSV → TSV
+echo "  foo   bar   "  | awk '{$1=$1; print}'                           # strip whitespace
+echo "hello"           | awk 'BEGIN{FS=""; OFS="-"} {$1=$1; print}'    # h-e-l-l-o
+```
+
+**Split into chars** — `FS=""` makes each character a field:
+```bash
+echo "hello" | awk 'BEGIN{FS=""} {for(i=1;i<=NF;i++) print $i}'  # one char per line
+
+# bash contrast
+str="hello"; for((i=0;i<${#str};i++)); do echo "${str:i:1}"; done
+```
+
+**Parse CSV:**
+```bash
+echo "alice,30,eng" | awk -F, '{print $1, "is", $2}'   # alice is 30
+awk -F, 'NR>1 {print $1, $3}' data.csv                 # skip header
+
+# bash contrast
+IFS=',' read -ra f <<< "alice,30,eng"; echo "${f[0]} is ${f[1]}"
+```
+
+**Reverse fields:**
+```bash
+awk '{for(i=NF;i>=1;i--) printf "%s%s",$i,(i>1?OFS:ORS)}' file  # "a b c" → "c b a"
+# no clean bash equivalent
+```
+
+> [!warning] awk strings are **1-indexed**, bash `${str:n:1}` is **0-indexed** — off-by-one waiting to happen.
 
 ---
 
@@ -359,7 +446,7 @@ echo "${file#*.}"         # tar.gz              (after first dot)
 ```bash
 email="foo@example.com"
 [[ $email =~ ([a-z]+)@([a-z]+\.[a-z]+) ]]
-echo "${BASH_REMATCH[0]}"   # full match
+echo "${BASH_REMATCH[0]}"   # foo@example.com
 echo "${BASH_REMATCH[1]}"   # foo
 echo "${BASH_REMATCH[2]}"   # example.com
 
@@ -444,10 +531,10 @@ eval $task
 eval "USER_$name=$val"            # dynamic variable names
 
 pointer="target"; target="Hello"
-eval "echo \$$pointer"            # indirect reference → Hello
+eval "echo \$$pointer"            # Hello
 
 range="{1..5}"
-eval echo $range                  # brace expansion → 1 2 3 4 5
+eval echo $range                  # 1 2 3 4 5
 ```
 
 **Key use case — environment hooks:**
@@ -523,8 +610,8 @@ sed '/mango/c aam' fruits          # replace matching lines
 
 ```bash
 sed 's/wolf/fox/3gI' file                          # 3rd+ occurrence, case-insensitive
-echo "AA BB" | sed 's/\([A-Z]\)\1/XX/g'            # replace doubles → XX
-echo "5 apples" | sed 's/[0-9]\+/[&]/g'            # wrap numbers → [5]
+echo "AA BB" | sed 's/\([A-Z]\)\1/XX/g'            # replace doubles → XX XX
+echo "5 apples" | sed 's/[0-9]\+/[&]/g'            # wrap numbers → [5] apples
 echo "light bulb" | sed 's/light/tube/g; s/bulb/light/g'  # order matters!
 ```
 
@@ -644,12 +731,14 @@ AWK variables are **untyped** — used as number or string depending on context.
 **String concatenation** — juxtapose values, no operator needed:
 ```bash
 awk '{ full = $1 " is a " $3; print full }' file
-awk '{ print $1 "_" $2 }' file
+# Alice is a Engineer
 ```
 
 **Ternary operator:**
 ```bash
 awk '{ label = ($2 >= 30) ? "senior" : "junior"; print $1, label }' file
+# Alice senior
+# Bob junior
 ```
 
 **Math functions:** `sin(x)` `cos(x)` `atan2(y,x)` `exp(x)` `log(x)` `sqrt(x)` `int(x)` `rand()` `srand(seed)`
@@ -719,7 +808,7 @@ awk 'END { printf "%.2f\n", sum/count }' file
 
 ### String Functions
 
-> [!note] Strings are **1-indexed**. Regex returns **longest leftmost match**.
+> [!warning] Strings are **1-indexed**. Regex returns **longest leftmost match**.
 
 - **`length(s)`**
 - **`substr(s, start[, len])`**
@@ -752,14 +841,14 @@ awk 'BEGIN { ret = system("ls /tmp"); print ret }' # check exit status
 
 **`systime()` + `strftime(fmt, ts)`** — unix timestamp and formatting
 ```bash
-awk 'BEGIN { print systime() }'                               # current epoch
-awk 'BEGIN { print strftime("%Y-%m-%d %H:%M:%S", systime()) }'  # human readable
-awk '{ print strftime("%H:%M:%S", $1), $2 }' logfile         # format epoch col
+awk 'BEGIN { print systime() }'                                  # 1745484732
+awk 'BEGIN { print strftime("%Y-%m-%d %H:%M:%S", systime()) }'  # 2025-04-24 14:32:12
+awk '{ print strftime("%H:%M:%S", $1), $2 }' logfile            # format epoch col
 ```
 
 **`ENVIRON["var"]`** — access shell environment variables
 ```bash
-awk 'BEGIN { print ENVIRON["HOME"] }'
+awk 'BEGIN { print ENVIRON["HOME"] }'           # /home/user
 awk -v user=$USER '$1 == user { print }' file   # same via -v
 ```
 
@@ -835,7 +924,7 @@ awk 'NR==FNR { a[$1]=$2; next } $1 in a { print $0, a[$1] }' file1 file2
 sed 's/,/ /g' data.csv | awk '{ print $2 }'
 ```
 
-> [!note] **`awk 'NF'`** — `NF` is 0 for blank lines, which is falsy. Clean idiom for skipping empty lines.
+> [!warning] **`awk 'NF'`** — `NF` is 0 for blank lines, which is falsy. Clean idiom for skipping empty lines.
 
 ---
 
@@ -874,7 +963,7 @@ x ""        # concatenate empty string → force string context
 | | `?:` | ternary |
 | lowest | `= += -= ...` | assignment |
 
-> [!note] String concatenation via juxtaposition has **lower** precedence than arithmetic — `print a b+c` prints `a` then `b+c` as a string, not `(a b) + c`.
+> [!warning] String concatenation via juxtaposition has **lower** precedence than arithmetic — `print a b+c` prints `a` then `b+c` as a string, not `(a b) + c`.
 
 ---
 
@@ -939,7 +1028,7 @@ awk -F':+'     '{ print $1 }' file       # one or more colons
 awk 'BEGIN{ RS=""; FS="\n" } { print NF, $1 }' file  # paragraph mode
 ```
 
-> [!note] `-F` is just shorthand for `-v FS=`. Setting `FS` in `BEGIN` is equivalent.
+> [!warning] `-F` is just shorthand for `-v FS=`. Setting `FS` in `BEGIN` is equivalent.
 
 ---
 
@@ -972,8 +1061,11 @@ awk 'BEGIN{ RS=""; FS="\n" } { print NF, $1 }' file  # paragraph mode
 
 **`NF` is writable:**
 ```bash
-awk '{ NF=3; print }' file     # truncate each record to 3 fields
-awk '{ NF++; $NF="new"; print }' file  # append a field
+echo "a b c d e" | awk '{ NF=3; print }'
+# a b c
+
+echo "a b c" | awk '{ NF++; $NF="new"; print }'
+# a b c new
 ```
 
 **Uninitialized array access creates the key:**
@@ -985,8 +1077,10 @@ if ("x" in arr) { ... }
 ```
 
 **`print a, b` vs `print a b`:**
-- `print a, b` → `a OFS b ORS` (OFS between, default space)
-- `print a b` → concatenation, no separator
+```bash
+awk 'BEGIN { a="foo"; b="bar"; print a, b }'   # foo bar   (OFS between)
+awk 'BEGIN { a="foo"; b="bar"; print a b }'    # foobar    (concatenation)
+```
 
 **`RS` as regex (gawk only):**
 ```bash
@@ -995,16 +1089,15 @@ awk 'BEGIN{RS="---\n"} { print NR, $0 }' file   # split on literal separator
 
 **Numeric string comparison gotcha:**
 ```bash
-# "10" > "9" depends on context
-awk 'BEGIN { if ("10" > "9") print "yes" }'   # NO — string compare, "1" < "9"
-awk 'BEGIN { if (10 > 9) print "yes" }'       # YES — numeric
-awk '$1 > 9 { print }' file                   # YES — $1 from input = numeric string
+awk 'BEGIN { if ("10" > "9") print "yes"; else print "no" }'  # no  — string compare
+awk 'BEGIN { if (10 > 9) print "yes"; else print "no" }'      # yes — numeric
+awk '$1 > 9 { print }' file                                    # yes — input field = numeric string
 ```
 
 **`print` to file / pipe:**
 ```bash
-awk '{ print $0 > "out.txt" }' file         # redirect (file stays open all run)
-awk '{ print $0 >> "out.txt" }' file        # append
-awk '{ print $0 | "sort" }' file            # pipe to command (one persistent pipe)
-awk '{ print $0 | "cat > " $1 ".txt" }' file  # dynamic filename via shell
+awk '{ print $0 > "out.txt" }' file          # redirect (file stays open whole run)
+awk '{ print $0 >> "out.txt" }' file         # append
+awk '{ print $0 | "sort" }' file             # pipe to command (one persistent pipe)
+awk '{ print $0 | "cat > " $1 ".txt" }' file # dynamic filename via shell
 ```

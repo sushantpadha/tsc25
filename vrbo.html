@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VRBO — Very Redundant Bash Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<style>
+  :root {
+    --bg:        #faf8f4;
+    --surface:   #f3f0ea;
+    --surface2:  #ece8de;
+    --border:    #ddd8cc;
+    --border2:   #c8c2b4;
+    --accent:    #b83232;
+    --accent2:   #2471a3;
+    --accent3:   #1e8449;
+    --ink:       #2c2825;
+    --ink2:      #5a5348;
+    --ink3:      #908880;
+    --code-bg:   #f4f1eb;
+    --yellow:    #d4a017;
+    --yellow-bg: #fefcf0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    padding: 3.5rem 4rem 3rem;
+  }
+
+  .header-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 0.85rem;
+  }
+
+  h1 {
+    font-family: 'Lora', serif;
+    font-size: clamp(2.4rem, 5vw, 3.7rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: #f0ece4;
+    margin-bottom: 0.55rem;
+  }
+
+  h1 em { font-style: italic; color: var(--yellow); }
+
+  .header-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #9a9080;
+    margin-top: 0.3rem;
+  }
+
+  .header-sub a { color: #b0a080; text-decoration: none; }
+  .header-sub a:hover { color: var(--yellow); }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.75rem 2.5rem 5rem;
+  }
+
+  /* ── TOC ── */
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--ink);
+    padding: 1.35rem 1.75rem;
+    margin: 2.25rem 0 2.75rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+  }
+
+  .toc-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 0.6rem;
+  }
+
+  nav.toc a {
+    display: block;
+    color: var(--ink2);
+    text-decoration: none;
+    padding: 0.14rem 0;
+    transition: color 0.1s;
+  }
+
+  nav.toc a:hover { color: var(--accent); }
+
+  /* ── BLOCKQUOTE ── */
+  blockquote {
+    border-left: 3px solid var(--border2);
+    padding: 0.6rem 1.5rem;
+    margin: 1.75rem 0;
+    color: var(--ink2);
+    font-style: italic;
+    font-family: 'Lora', serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  blockquote a { color: var(--accent2); }
+
+  /* ── HEADINGS ── */
+  h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.65rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 3.25rem 0 0.9rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .prob-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 0.27em 0.62em;
+    border-radius: 2px;
+    font-style: normal;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink2);
+    letter-spacing: 0.07em;
+    margin: 2.1rem 0 0.65rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.38rem;
+  }
+
+  h4 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 1.4rem 0 0.45rem;
+  }
+
+  /* ── PROSE ── */
+  p { margin-bottom: 0.95rem; }
+  a { color: var(--accent2); }
+  strong { font-weight: 500; }
+  em { font-style: italic; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.25rem 0; }
+  ul, ol { padding-left: 1.6rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.3rem; }
+
+  /* ── INLINE CODE ── */
+  :not(pre) > code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.83em;
+    background: var(--code-bg);
+    color: var(--accent);
+    padding: 0.11em 0.36em;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── CODE BLOCKS (Prism) ── */
+  pre[class*="language-"] {
+    margin: 0.85rem 0 1.35rem !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--border) !important;
+    background: var(--code-bg) !important;
+    padding: 1.1rem 1.35rem !important;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  pre[class*="language-"] code[class*="language-"] {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 0.815rem !important;
+    line-height: 1.72 !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    text-shadow: none !important;
+  }
+
+  /* Prism token colors — warm, readable on cream */
+  .token.comment,
+  .token.prolog { color: #998c7c !important; font-style: italic; }
+  .token.keyword,
+  .token.builtin,
+  .token.important { color: #b83232 !important; font-weight: 500; }
+  .token.string,
+  .token.attr-value { color: #2e6e35 !important; }
+  .token.number,
+  .token.boolean { color: #6a3aad !important; }
+  .token.function { color: #1a5f96 !important; }
+  .token.operator { color: #5a5348 !important; }
+  .token.punctuation { color: #7a7060 !important; }
+  .token.variable { color: #a84800 !important; }
+  .token.class-name { color: #1a6f6a !important; }
+  .token.property { color: #1a5f96 !important; }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.2rem 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  th {
+    background: var(--surface2);
+    color: var(--ink);
+    padding: 0.52rem 0.9rem;
+    text-align: left;
+    border: 1px solid var(--border2);
+    font-weight: 500;
+  }
+
+  td {
+    padding: 0.42rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--ink2);
+  }
+
+  tr:nth-child(even) td { background: var(--surface); }
+
+  /* ── HINT ── */
+  .hint {
+    background: #eef7ec;
+    border: 1px solid #b8dcb4;
+    border-left: 3px solid var(--accent3);
+    padding: 0.85rem 1.15rem;
+    margin: 1.15rem 0;
+    font-size: 14px;
+    color: var(--ink2);
+  }
+
+  .hint-lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.32rem;
+  }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--yellow-bg);
+    border: 1px solid #ddd090;
+    border-left: 3px solid var(--yellow);
+    padding: 0.78rem 1.15rem;
+    margin: 1.15rem 0;
+    font-size: 14px;
+    color: var(--ink2);
+  }
+
+  /* ── BACKGROUND BOX ── */
+  .bg-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.65rem 2.1rem;
+    margin: 1.75rem 0;
+    position: relative;
+  }
+
+  .bg-box::before {
+    content: 'background';
+    position: absolute;
+    top: -0.58rem; left: 1.2rem;
+    background: var(--bg);
+    padding: 0 0.38rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink3);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  /* ── QUESTION LIST ── */
+  .qlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.65rem 0 1.15rem;
+  }
+
+  .qlist li {
+    padding: 0.52rem 0 0.52rem 2.2rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    font-size: 14.5px;
+  }
+
+  .qlist li:last-child { border-bottom: none; }
+
+  .qlist li::before {
+    content: attr(data-q);
+    position: absolute;
+    left: 0; top: 0.56rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* ── SPOILER ── */
+  details.spoiler {
+    margin: 1.4rem 0;
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  details.spoiler summary {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.72rem 1.05rem;
+    background: var(--surface2);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink2);
+    user-select: none;
+    list-style: none;
+    transition: background 0.15s;
+  }
+
+  details.spoiler summary::-webkit-details-marker { display: none; }
+  details.spoiler summary:hover { background: #e4ddd0; }
+  details.spoiler[open] > summary {
+    color: var(--ink);
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .s-icon {
+    width: 17px; height: 17px;
+    border: 1.5px solid var(--ink3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s, border-color 0.2s, color 0.2s;
+    color: var(--ink3);
+  }
+
+  details.spoiler[open] .s-icon {
+    transform: rotate(45deg);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .s-note {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ink3);
+    font-style: italic;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .spoiler-body {
+    padding: 1.2rem 1.45rem;
+    background: var(--surface);
+  }
+
+  .spoiler-body > p,
+  .spoiler-body > .annotation {
+    font-size: 13.5px;
+    color: var(--ink2);
+    margin-top: 0.7rem;
+    margin-bottom: 0;
+  }
+
+  /* ── SECTION SPACING ── */
+  section + section { margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">CS Lab Assignment</div>
+  <h1>We're <em>VRBO</em></h1>
+  <div class="header-sub">
+    Very Redundant Bash Ops &nbsp;·&nbsp;
+    <a href="https://youtube.com/shorts/B1giZ0AveC4?si=dtubWRoHqtI-PUlN">title credits ↗</a>
+  </div>
+</header>
+
+<div class="container">
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#background">Background</a>
+  <a href="#p0">Problem 0 — Observe Self-Modification</a>
+  <a href="#p1a">Problem 1A — Read the Call Stack</a>
+  <a href="#p1b">Problem 1B — Fixed Point</a>
+  <a href="#p1c">Problem 1C — Spice it Up</a>
+  <a href="#p2">Problem 2 — Don't Quine Already</a>
+  <a href="#p3">Problem 3 — The Z Combinator</a>
+  <a href="#p4">Problem 4 — Let's Interpret</a>
+  <a href="#solutions">Model Solutions</a>
+</nav>
+
+<blockquote>
+  <em>"The Y combinator is the lambda calculus equivalent of a strange loop —
+  a structure that refers to itself without ever naming itself."</em><br>
+  — Douglas Hofstadter, <em>Gödel, Escher, Bach</em>
+</blockquote>
+
+<!-- ══════════════ BACKGROUND ══════════════ -->
+<section id="background">
+<div class="bg-box">
+<p>
+  You might have heard of heavy CS terms like "self-referential code", Quines, or even the (original)
+  Y Combinator. With these problems, you will try to implement some of these in bash!
+</p>
+<p>
+  In 1936, before computers existed, Alonzo Church invented the <strong>lambda calculus</strong> — a
+  formal system where the only primitive is the anonymous function. No numbers, loops or named
+  procedures. Just functions applied to arguments.
+</p>
+<p>The surprising result: that is <em>enough</em>. Everything computable can be expressed this way.</p>
+<p>Pure lambda calculus has no assignment, so you cannot write:</p>
+<pre><code class="language-python">factorial = λn. if n=0 then 1 else n * factorial(n-1)</code></pre>
+<p>
+  <code>factorial</code> does not exist yet on the right-hand side when you write the definition.
+  You cannot name a function and call it from within its own body.
+</p>
+<p>So how do you get recursion? You use a <strong>fixed-point combinator</strong>.</p>
+<p>
+  A fixed point of a function <code>f</code> is a value <code>x</code> such that <code>f(x) = x</code>.
+  The <strong>Y combinator</strong> (the original), discovered by Haskell Curry, constructs the fixed
+  point of <em>any</em> function:
+</p>
+<pre><code class="language-python">Y = λf. (λx. f(x x))(λx. f(x x))</code></pre>
+<p>
+  A primer: In lambda calculus land, arguments "applied" to a function are just written next to them
+  so <code>a + b</code> becomes <code>+ a b</code>, and multi-argument functions are implemented using
+  <strong>currying</strong> — a 2-argument function is just a function that returns a function that
+  returns a number, so <code>+ = λa. (λb (...))</code>.
+  (Implementing <a href="https://en.wikipedia.org/wiki/Church_encoding">addition</a> in lambda calculus
+  is a very different task but hopefully this clears things.)
+</p>
+<p>
+  Now, unfold it once:
+  <code>Y(f) = (λx. f(x x))(λx. f(x x)) = f((λx. f(x x))(λx. f(x x))) = f(Y(f))</code>.
+</p>
+<p>
+  So <code>Y(f) = f(Y(f))</code> — the fixed point equation holds. The Y combinator hands <code>f</code>
+  a self-reference and <code>f</code> uses it to recur, without ever naming itself.
+</p>
+<p>In Python (using the strict-evaluation-safe <strong>Z combinator</strong>):</p>
+<pre><code class="language-python">Z = lambda f: (lambda x: f(lambda *v: x(x)(*v)))(
+               lambda x: f(lambda *v: x(x)(*v)))</code></pre>
+<p>We will deal with this later. Let's get started.</p>
+</div>
+</section>
+
+<!-- ══════════════ PROBLEM 0 ══════════════ -->
+<section id="p0">
+<h2><span class="prob-tag">Problem 0</span> Observe Self-Modification</h2>
+
+<h3>Setup</h3>
+<pre><code class="language-bash">mkdir test && cd test</code></pre>
+<p>Create <code>self.sh</code>:</p>
+<pre><code class="language-bash">#!/bin/bash
+echo echo echo bash</code></pre>
+<p>Make it executable:</p>
+<pre><code class="language-bash">chmod +x self.sh</code></pre>
+
+<h3>Tasks</h3>
+<p>Run each command and observe. Do not move on until you understand what happened.</p>
+<pre><code class="language-bash">./self.sh
+./self.sh >> self.sh   # does this fail? try the below
+bash self.sh >> self.sh
+cat self.sh            # does this fail?
+
+# try in a different shell
+cat self.sh
+
+# exit in the original shell now
+
+# now repeat :D</code></pre>
+
+<h3>Answer the following</h3>
+<ol class="qlist">
+  <li data-q="(a)">What does <code>./self.sh</code> output on the very first run? Trace it: bash sees <code>echo echo echo bash</code> and executes <code>echo</code> with arguments <code>echo echo bash</code>. What does that print?</li>
+  <li data-q="(b)">After <code>bash self.sh >> self.sh</code>, how many lines does the file have? List them. Why does one run produce <em>four</em> new lines — not one?</li>
+  <li data-q="(c)">What happens as you keep repeating this?</li>
+</ol>
+</section>
+
+<!-- ══════════════ PROBLEM 1A ══════════════ -->
+<section id="p1a">
+<h2><span class="prob-tag">Problem 1A</span> Read the Call Stack</h2>
+
+<p>We run this script as <code>bash recur.sh >> recur.sh</code> repeatedly to compute some recurrence. You are given this partially-run file:</p>
+
+<pre><code class="language-bash">#!/bin/bash
+N=$(grep '^#S' recur.sh | tail -1 | grep -o 'N=[0-9]*' | cut -d= -f2)
+V=$(grep '^#S' recur.sh | tail -1 | grep -o 'V=[0-9]*' | cut -d= -f2)
+[ "$N" -gt 0 ] && echo "#S N=$((N-1)) V=$((V*N))"
+#S N=6 V=1
+#S N=5 V=6
+#S N=4 V=30
+#S N=3 V=120
+#S N=2 V=360</code></pre>
+
+<p>Decipher what this script is trying to compute <strong>without running it.</strong></p>
+<p>When you're done, use <code>grep</code>, <code>awk</code>, <code>sed</code>, <code>wc</code>, <code>cut</code> etc. to extract the actual final answer of the intended computation programmatically.</p>
+<p>Write <code>answer1a.sh</code> whose output is exactly:</p>
+<pre><code class="language-bash">original_N     = 6
+num_iterations = 4
+rem_iterations = 2
+final_answer   = 720</code></pre>
+
+<div class="callout">You can extend to different recurrences!</div>
+
+<details class="spoiler">
+  <summary><span class="s-icon">+</span> model solution — answer1a.sh <span class="s-note">try it first</span></summary>
+  <div class="spoiler-body">
+<pre><code class="language-bash">#!/bin/bash
+orig_N=$(grep '^#S' recur.sh | head -1 | grep -o 'N=[0-9]*' | cut -d= -f2)
+num_iter=$(( $(grep -c '^#S' recur.sh) - 1 ))
+last_N=$(grep '^#S' recur.sh | tail -1 | grep -o 'N=[0-9]*' | cut -d= -f2)
+final=$(grep '^#S' recur.sh | tail -1 \
+  | sed 's/#S N=\([0-9]*\) V=\([0-9]*\)/\1 \2/' \
+  | awk '{n=$1; v=$2; for(i=n; i>=1; i--) v*=i; print v}')
+
+echo "original_N     = $orig_N"
+echo "num_iterations = $num_iter"
+echo "rem_iterations = $last_N"
+echo "final_answer   = $final"</code></pre>
+  </div>
+</details>
+</section>
+
+<!-- ══════════════ PROBLEM 1B ══════════════ -->
+<section id="p1b">
+<h2><span class="prob-tag">Problem 1B</span> Next Stop, Fixed Point!</h2>
+
+<p>
+  Write a bash script that when run as <code>bash answer1b.sh >> answer1b.sh</code>
+  modifies itself once, and then settles into a fixed point so further repetitions do not affect it.
+  Use the <code>if</code> conditional and <code>wc</code> command to achieve this without requiring
+  arithmetic operations.
+</p>
+
+<div class="hint">
+  <span class="hint-lbl">note</span>
+  This is an open-ended self-exploration based task. The answer is not much harder than the one before.
+</div>
+
+<details class="spoiler">
+  <summary><span class="s-icon">+</span> model solution — answer1b.sh <span class="s-note">try it first</span></summary>
+  <div class="spoiler-body">
+<pre><code class="language-bash">#!/bin/bash
+# On first run: 3 lines -> condition true -> appends "# done" -> now 4 lines
+# All subsequent runs: 4+ lines -> condition false -> no output -> fixed point
+if [ "$(wc -l < answer1b.sh)" -le 3 ]; then
+    echo "# done"
+fi</code></pre>
+  </div>
+</details>
+</section>
+
+<!-- ══════════════ PROBLEM 1C ══════════════ -->
+<section id="p1c">
+<h2><span class="prob-tag">Problem 1C</span> Spice it Up!</h2>
+
+<p>Why don't you try reading as well as writing to the same script?</p>
+<p>Write <code>fib.sh</code> which is run as <code>bash fib.sh &lt; fib.sh >> fib.sh</code>. It does the following, in order:</p>
+<ul>
+  <li>Reads the <code>stdin</code> into a variable and parses it using suitable utilities (smiles in grep) to determine the value of last iterate's results</li>
+  <li>Prints out the fibonacci value to <code>stderr</code> (use <code>echo ... >&2</code> for this)</li>
+  <li>Computes the next fibonacci iterate values and prints them to <code>stdout</code> for appending</li>
+  <li>Stores the iterates at the bottom of the script in the form of <em>bash variables</em></li>
+</ul>
+<p>
+  Why do this? This is us fighting back against the line-by-line interpreted nature of bash by
+  forcing a script to read from its own later section, and store its values in itself.
+</p>
+<p>Running the script should give this output:</p>
+<pre><code class="language-bash">dietcoke@OMEN:tmp/asdf 5.384s $ bash fib.sh < fib.sh >> fib.sh
+fib(1) = 1
+dietcoke@OMEN:tmp/asdf 0.034s $ bash fib.sh < fib.sh >> fib.sh
+fib(2) = 1
+dietcoke@OMEN:tmp/asdf 0.033s $ bash fib.sh < fib.sh >> fib.sh
+fib(3) = 2
+dietcoke@OMEN:tmp/asdf 0.033s $ bash fib.sh < fib.sh >> fib.sh
+fib(4) = 3
+dietcoke@OMEN:tmp/asdf 0.032s $ bash fib.sh < fib.sh >> fib.sh
+fib(5) = 5
+dietcoke@OMEN:tmp/asdf 0.033s $ bash fib.sh < fib.sh >> fib.sh
+fib(6) = 8
+dietcoke@OMEN:tmp/asdf 0.034s $</code></pre>
+
+<div class="hint">
+  <span class="hint-lbl">hint</span>
+  You only need to store 3 values per iteration. Store them as bash variables <code>a</code>, <code>b</code>, <code>i</code> for example. Ensure you read the appropriate values first. Then compute the next iterate values and echo them in the suitable format.
+</div>
+</section>
+
+<!-- ══════════════ PROBLEM 2 ══════════════ -->
+<section id="p2">
+<h2><span class="prob-tag">Problem 2</span> Don't Quine Already!</h2>
+
+<p>
+  A <a href="https://en.wikipedia.org/wiki/Quine_(computing)"><strong>quine</strong></a>
+  is a program that outputs its own source code exactly — no arguments, no file reads, no network
+  access. Pure self-reproduction.
+</p>
+<p>Formally: if <code>run(P)</code> is the stdout of program <code>P</code>, a quine <code>Q</code> satisfies:</p>
+<pre><code class="language-python">run(Q) = Q</code></pre>
+<p>
+  This is a <strong>fixed point</strong> of <code>run</code>. Kleene's Second Recursion Theorem
+  guarantees that such a fixed point exists in any Turing-complete language.
+</p>
+
+<h3>Part A — Cheating the Game</h3>
+<p>
+  We present <code>quine.sh</code> such that <code>bash quine.sh</code> outputs the exact contents of
+  <code>quine.sh</code>. Let's see if you can guess this 2-liner script.
+</p>
+<p>To verify:</p>
+<pre><code class="language-bash">bash quine.sh > out.txt
+diff out.txt quine.sh && echo "QUINE VERIFIED"</code></pre>
+<p>The solution is…</p>
+
+<details class="spoiler">
+  <summary><span class="s-icon">+</span> reveal solution — quine.sh</summary>
+  <div class="spoiler-body">
+<pre><code class="language-bash">#!/bin/bash
+cat "$0"</code></pre>
+    <p class="annotation"><code>$0</code> is the path to the currently executing script. Clean — but a theorist would say this is not a "true" quine since it reads source from disk rather than reconstructing it from internal data alone.</p>
+  </div>
+</details>
+
+<h3>Part B — We're Purists</h3>
+<p>Write <code>quine_pure.sh</code> using only <code>printf</code> and a string variable <code>s</code>. No <code>cat</code>, no <code>$0</code>, no file access.</p>
+<p>The structure:</p>
+<pre><code class="language-bash">#!/bin/bash
+s=&lt;source encoded as a string, containing a %s placeholder&gt;
+printf "$s" "$s"</code></pre>
+<p>
+  When <code>printf "$s" "$s"</code> runs, <code>%s</code> is replaced by the value of <code>$s</code>,
+  which reconstructs the <code>s=...</code> line. The key challenge: the string <code>s</code> must
+  contain a representation of itself, including the surrounding quote characters.
+</p>
+
+<div class="hint">
+  <span class="hint-lbl">note</span>
+  This is supposed to be an open-ended challenge. You can look at standard quines in other languages but that would give it away. You are encouraged to try this out yourself first — don't quine already!
+</div>
+<div class="hint">
+  <span class="hint-lbl">hint</span>
+  The quote character <code>'</code> has ASCII code 39 (octal <code>\047</code>). Inside a <code>$'...'</code> literal in bash, you can write <code>\047</code> to get a literal single quote without closing the string. This lets you encode the <code>s='...'</code> line inside <code>s</code> itself.
+</div>
+</section>
+
+<!-- ══════════════ PROBLEM 3 ══════════════ -->
+<section id="p3">
+<h2><span class="prob-tag">Problem 3</span> The Classier, More Chic Combinator</h2>
+
+<p>
+  Here is a classical implementation of a
+  <a href="https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_fixed-point_combinator">variant
+  of the fixed-point operator</a> in Python. Note the peculiar syntax, so as to avoid undefined behaviour.
+</p>
+
+<pre><code class="language-python">Z = lambda f: (lambda x: f(lambda *v: x(x)(*v)))(
+               lambda x: f(lambda *v: x(x)(*v)))
+
+fact_template = lambda f: lambda n: 1 if n <= 1 else n * f(n - 1)
+factorial = Z(fact_template)
+print(factorial(5))  # 120</code></pre>
+
+<p>
+  The key: <code>fact_template</code> is a true lambda function so it cannot "name" itself. Hence,
+  it receives <code>f</code> (usually just itself) as a self-reference and never names itself.
+  <code>Z</code> implements the Z combinator. When passed <code>fact_template</code>, it produces a
+  lambda expression with the value of <code>f</code> substituted.
+</p>
+<p>
+  Notice that here <code>v</code> has been added to ensure that the final lambda created
+  (<code>factorial</code>) can accept arguments and lazily evaluate the expression recursively.
+</p>
+<p>
+  Here <code>Z(fact_template)</code> returns <code>f(h)</code> where
+  <code>h = lambda *v: g(g)(*v)</code> and <code>g = lambda x: f(lambda *v: x(x)(*v))</code> and
+  <code>f = fact_template</code>, which is in turn just a function.
+</p>
+<p>
+  Observe what happens when <code>factorial(5)</code> is called. It first evaluates <code>f(h)(5)</code>
+  which reduces to <code>5 * h(4)</code>. The second term reduces to <code>g(g)(4)</code> but notice!
+  <code>Z(fact_template)</code> is in fact simply a lambda of the form
+  <code>lambda x: g(g)(x)</code>… we have recursion!! This reduces to <code>4 * h(3)</code> and so on
+  until we hit a base case.
+</p>
+
+<blockquote>
+  Think about what happens if you call the Z combinator on a recursively defined function which does
+  not have a base case… Can you always determine if a given function satisfies this property?
+  <a href="https://en.wikipedia.org/wiki/G%C3%B6del%27s_incompleteness_theorems">Shout out to Gödel.</a>
+</blockquote>
+
+<p>
+  In bash, we cannot pass functions as arguments. But we can pass <strong>script paths</strong>.
+  Executing a script with arguments is function application. Passing <code>"$0"</code> — the script's
+  own path — is self-application.
+</p>
+
+<table>
+  <tr><th>Lambda calculus</th><th>Bash</th></tr>
+  <tr><td>Anonymous function <code>λn. body</code></td><td>A script file</td></tr>
+  <tr><td>Applying <code>f</code> to argument <code>x</code></td><td><code>bash f.sh x</code></td></tr>
+  <tr><td>Self-application <code>x x</code></td><td>Passing <code>"$0"</code> as first argument</td></tr>
+  <tr><td><code>fact_template</code></td><td><code>fact_templ.sh</code></td></tr>
+  <tr><td>Z combinator</td><td><code>Z.sh</code></td></tr>
+</table>
+
+<p>You are given <strong><code>fact_templ.sh</code></strong> — the factorial template. This is the bash equivalent of <code>fact_template</code> in the Python code above. It receives a combinator as <code>$1</code> and uses it to recurse — never naming itself.</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+combinator="$1"
+n="$2"
+
+if [ "$n" -le 1 ]; then
+    echo 1
+else
+    # Recursive call: ask the combinator to apply the template again with n-1
+    prev=$( "$combinator" "$0" $(( n - 1 )) )
+    echo $(( n * prev ))
+fi</code></pre>
+
+<h3>Subtask 3.1 — Finish Combining!</h3>
+
+<p>Implement in <code>Z.sh</code> the logic for the Z combinator. Assume the below usage.</p>
+
+<pre><code class="language-bash">chmod +x Z.sh fact_templ.sh
+./Z.sh ./fact_templ.sh 5
+./Z.sh ./fact_templ.sh 1
+./Z.sh ./fact_templ.sh 7</code></pre>
+
+<p>Write <strong><code>Z.sh</code></strong> — the combinator. Its only job is to call the template, passing itself as the combinator.</p>
+
+<div class="hint">
+  <span class="hint-lbl">hint</span>
+  What is the first argument passed to <code>fact_templ.sh</code>? Convince yourself of the correct answer.
+</div>
+
+<p>Now trace <code>./Z.sh ./fact_templ.sh 3</code> manually:</p>
+<ul>
+  <li><code>Z.sh</code> receives <code>template=fact_templ.sh</code>, <code>n=3</code>. It calls <code>exec fact_templ.sh Z.sh 3</code>.</li>
+  <li><code>fact_templ.sh</code> receives <code>combinator=Z.sh</code>, <code>n=3</code>. What does it do next?</li>
+  <li>Follow the chain until the base case.</li>
+</ul>
+<p>See the model solution if you need help here.</p>
+
+<h3>Subtask 3.2 — Write fib_templ.sh</h3>
+
+<p>You have <code>Z.sh</code>. Now write <code>fib_templ.sh</code> — a Fibonacci template following the <strong>exact same interface</strong> as <code>fact_templ.sh</code>:</p>
+<ul>
+  <li>Takes <code>(combinator_path, n)</code> as <code>$1</code> and <code>$2</code></li>
+  <li>Uses <code>"$combinator" "$0" &lt;arg&gt;</code> for recursive calls</li>
+  <li>Never contains its own filename</li>
+  <li>Computes <code>fib(0)=0, fib(1)=1, fib(n)=fib(n-1)+fib(n-2)</code></li>
+</ul>
+
+<pre><code class="language-bash">./Z.sh ./fib_templ.sh 10   # 55
+./Z.sh ./fib_templ.sh 7    # 13
+./Z.sh ./fib_templ.sh 0    # 0</code></pre>
+</section>
+
+<!-- ══════════════ PROBLEM 4 ══════════════ -->
+<section id="p4">
+<h2><span class="prob-tag">Problem 4</span> Let's Interpret</h2>
+
+<p>
+  Enough self-modification and hate against the interpreter. We will now build an interpreter for
+  linear expressions to gain appreciation for our foe.
+</p>
+<p>
+  This is meant for your practice and for gaining comfort with writing heavier bash code; the later
+  parts involve really advanced code so don't be disheartened if it takes a lot of effort to go
+  through those.
+</p>
+
+<h3>Inputs</h3>
+
+<h4>funcs.txt</h4>
+<p>One function per line. Each function takes two parameters and has a right-hand side expression:</p>
+<pre><code class="language-bash">f a b 2*a+b
+g a b a+2*b
+h a b f(2*a+b,a)
+i a b g(a+b,2*b)</code></pre>
+
+<p>The RHS is one of exactly two things:</p>
+<ul>
+  <li>A <strong>linear expression</strong> in <code>a</code> and <code>b</code>: things like <code>2*a+b</code>, <code>a+2*b</code>, <code>3*a</code>, <code>a+b</code>. No spaces, no parentheses. Coefficients are plain integers. The expression variables are always literally <code>a</code> and <code>b</code> (the parameter names in the file are just for readability).</li>
+  <li>A <strong>composition</strong>: a call to a previously defined function with two linear expressions as arguments: <code>f(2*a+b,a)</code>, <code>g(a+b,2*b)</code>. The callee must appear earlier in the file. No nesting beyond one level here.</li>
+</ul>
+
+<h4>calls.txt</h4>
+<p>Expressions in <strong>prefix notation</strong>, one per line:</p>
+<pre><code class="language-bash">f 2 3
+f 1 g 3 4
+h g 2 3 f 1 4
+i h 2 3 g 1 2</code></pre>
+<p>
+  In prefix notation the function always comes before its two arguments, which can themselves be calls.
+  So <code>f 1 g 3 4</code> means <code>f(1, g(3,4))</code>, and <code>h g 2 3 f 1 4</code> means
+  <code>h(g(2,3), f(1,4))</code>. Work out <code>i h 2 3 g 1 2</code> yourself before running.
+</p>
+
+<hr>
+
+<h3>Part A — Linear Expression Evaluator</h3>
+
+<p>Write a bash function <code>eval_linear</code> that takes an expression string and concrete values for <code>a</code> and <code>b</code>, and returns the result:</p>
+<pre><code class="language-bash">eval_linear "2*a+b"  2 3   # → 7
+eval_linear "a+2*b"  4 5   # → 14
+eval_linear "3*a"    2 3   # → 6
+eval_linear "5"      9 9   # → 5</code></pre>
+
+<div class="hint">
+  <span class="hint-lbl">hint</span>
+  You don't need to write a parser. Think about what <code>${expr//a/$a}</code> does to the string <code>"2*a+b"</code> when <code>a=2</code>, and what <code>$(( ... ))</code> does with the result. One substitution for <code>a</code>, one for <code>b</code>, done.
+</div>
+<div class="hint">
+  <span class="hint-lbl">think about</span>
+  Is there any input where this substitution approach breaks? What if the value of <code>a</code> happened to contain the letter <code>b</code>? Can that happen given our grammar?
+</div>
+
+<h3>Part B — Build the Dispatch Table</h3>
+
+<p>Read <code>funcs.txt</code> and register each function as a real callable bash function using <code>eval</code>. For the two RHS forms, generate:</p>
+
+<p><strong>Linear</strong> — <code>f a b 2*a+b</code> generates:</p>
+<pre><code class="language-bash">f() {
+    local a=$1 b=$2
+    eval_linear "2*a+b" "$a" "$b"
+}</code></pre>
+
+<p><strong>Composition</strong> — <code>h a b f(2*a+b,a)</code> generates:</p>
+<pre><code class="language-bash">h() {
+    local a=$1 b=$2
+    local _a1=$(eval_linear "2*a+b" "$a" "$b")
+    local _a2=$(eval_linear "a" "$a" "$b")
+    f "$_a1" "$_a2"
+}</code></pre>
+
+<p>Print each generated definition as you register it so you can verify it looks right before running anything.</p>
+
+<div class="hint">
+  <span class="hint-lbl">hints</span>
+  <ul style="margin: 0.3rem 0 0; padding-left: 1.25rem;">
+    <li>Read each line with <code>while IFS=' ' read -r name p1 p2 rhs; do ... done &lt; funcs.txt</code></li>
+    <li>Detect composition using the regex pattern <code>^([a-z])\((.+),(.+)\)$</code> and extract pieces via <code>${BASH_REMATCH[1]}</code>, <code>${BASH_REMATCH[2]}</code>, <code>${BASH_REMATCH[3]}</code></li>
+    <li>Build the function body as a string using a heredoc, then <code>eval</code> it</li>
+    <li><strong>Why <code>eval</code> and not just a variable assignment?</strong> What does eval actually do here that assignment can't?</li>
+    <li><strong>Why does ordering work?</strong> When bash evals <code>h</code>'s definition, does it try to call <code>f</code> immediately? What would happen if you put <code>h</code> before <code>f</code> in <code>funcs.txt</code>?</li>
+  </ul>
+</div>
+
+<h3>Part C — Prefix Call Evaluator</h3>
+
+<p>Now handle <code>calls.txt</code>. The grammar for a value in prefix notation is:</p>
+<pre><code class="language-python">val ::= integer
+      | funcname val val</code></pre>
+
+<p>
+  So to evaluate a line you need to walk the token stream and consume tokens as you go — a token
+  consumed by a recursive call to <code>parse_val</code> must not be seen again by the caller. This
+  means you need a <strong>global index</strong> into the token array that all recursive calls share.
+</p>
+
+<pre><code class="language-bash">TOKENS=()
+IDX=0
+
+parse_val() {
+    local tok="${TOKENS[$IDX]}"
+    IDX=$(( IDX + 1 ))
+    if [[ $tok =~ ^-?[0-9]+$ ]]; then
+        PARSE_RESULT=$tok                        # literal: we're done
+    else
+        parse_val; local _a=$PARSE_RESULT        # consume first argument
+        parse_val; local _b=$PARSE_RESULT        # consume second argument
+        PARSE_RESULT=$("$tok" "$_a" "$_b")       # call the function
+    fi
+}</code></pre>
+
+<p>For each line in <code>calls.txt</code>, split it into <code>TOKENS</code>, reset <code>IDX=0</code>, call <code>parse_val</code>, and print:</p>
+<pre><code class="language-bash">f 2 3            =>  7
+g 4 5            =>  14
+f 1 g 3 4        =>  13
+h g 2 3 f 1 4    =>  52
+i h 2 3 g 1 2    =>  41</code></pre>
+
+<div class="hint">
+  <span class="hint-lbl">questions</span>
+  <ul style="margin: 0.3rem 0 0; padding-left: 1.25rem;">
+    <li>Why must <code>IDX</code> and <code>PARSE_RESULT</code> be globals? Try making <code>IDX</code> local and see what breaks. What's the bash-specific reason this fails, relating to how function calls work in bash vs other languages?</li>
+    <li>What does your parser do when a line in <code>calls.txt</code> has too few tokens? Too many?</li>
+  </ul>
+</div>
+
+<h3>Some Test Cases</h3>
+<p>Run as <code>bash interp.sh</code>.</p>
+
+<p><strong>funcs.txt</strong></p>
+<pre><code class="language-bash">f a b 2*a+b
+g a b a+2*b
+h a b f(2*a+b,a)
+i a b g(a+b,2*b)
+j a b f(a,b)
+k a b g(3*a+b,a+b)</code></pre>
+
+<p><strong>calls.txt</strong> (don't copy the comments!)</p>
+<pre><code class="language-bash"># --- sanity checks ---
+f 2 3            =>  7
+f 0 0            =>  0
+f 1 0            =>  2
+f 0 1            =>  1
+# --- basic functions ---
+g 3 4            =>  11
+h 2 3            =>  16
+i 2 3            =>  17
+j 5 7            =>  17
+k 2 3            =>  19
+# --- one level of nesting ---
+f f 2 3 4        =>  18
+g 1 h 2 3        =>  33
+# --- two levels of nesting ---
+h h 1 1 g 2 2    =>  47
+i f 1 2 g 3 4    =>  59
+f g 0 5 h 0 3    =>  26
+k f 1 2 g 2 1    =>  32</code></pre>
+</section>
+
+<!-- ══════════════ MODEL SOLUTIONS ══════════════ -->
+<section id="solutions">
+<h2><span class="prob-tag">Solutions</span> Model Solutions</h2>
+
+<h3>fib.sh</h3>
+<pre><code class="language-bash">#!/bin/bash
+
+# Read state from stdin (which is this file, via < fib.sh)
+input=$(cat)
+a=$(echo "$input" | grep '^a=' | tail -1 | cut -d= -f2)
+b=$(echo "$input" | grep '^b=' | tail -1 | cut -d= -f2)
+i=$(echo "$input" | grep '^i=' | tail -1 | cut -d= -f2)
+
+# Output current fibonacci number
+echo "fib($i) = $b" >&2  # printed to stderr: does NOT go into the file
+
+# Compute next state
+next=$((a + b))
+a=$b
+b=$next
+i=$((i + 1))
+
+# Write new state to stdout — appended to file via >>
+echo "a=$a"
+echo "b=$b"
+echo "i=$i"
+echo
+
+# --- state (do not remove) ---
+a=0
+b=1
+i=1
+# --- original state ends ---
+# example with one iteration
+a=1
+b=1
+i=2</code></pre>
+
+<h3>Z.sh</h3>
+<pre><code class="language-bash">#!/usr/bin/env bash
+# Usage: ./Z.sh <template_script> <n>
+template="$1"
+n="$2"
+
+# Call the template with this script (the combinator) and n.
+# The template will then use the combinator to make recursive calls
+exec "$template" "$0" "$n"</code></pre>
+
+<h3>fib_templ.sh</h3>
+<pre><code class="language-bash">#!/usr/bin/env bash
+combinator="$1"
+n="$2"
+
+if [ "$n" -le 0 ]; then
+    echo 0
+elif [ "$n" -eq 1 ]; then
+    echo 1
+else
+    a=$( "$combinator" "$0" $(( n - 1 )) )
+    b=$( "$combinator" "$0" $(( n - 2 )) )
+    echo $(( a + b ))
+fi</code></pre>
+
+<h3>interp.sh</h3>
+<pre><code class="language-bash">#!/bin/bash
+
+# Part A: evaluate a linear expression in a,b given concrete values
+eval_linear() {
+    local expr=$1 a=$2 b=$3
+    local s="${expr//a/$a}"
+    s="${s//b/$b}"
+    echo $(( s ))
+}
+
+# Part B: generate and register bash functions from funcs.txt
+build_func() {
+    local name=$1 p1=$2 p2=$3 rhs=$4
+    local fn_pat='^([a-z])\((.+),(.+)\)$'
+    if [[ $rhs =~ $fn_pat ]]; then
+        # composition RHS: callee(expr1, expr2)
+        local callee="${BASH_REMATCH[1]}"
+        local expr1="${BASH_REMATCH[2]}" expr2="${BASH_REMATCH[3]}"
+        cat << FUNCDEF
+${name}() {
+    local ${p1}=\$1 ${p2}=\$2
+    local _a1=\$(eval_linear "${expr1}" "\$${p1}" "\$${p2}")
+    local _a2=\$(eval_linear "${expr2}" "\$${p1}" "\$${p2}")
+    ${callee} "\$_a1" "\$_a2"
+}
+FUNCDEF
+    else
+        # linear RHS
+        cat << FUNCDEF
+${name}() {
+    local ${p1}=\$1 ${p2}=\$2
+    eval_linear "${rhs}" "\$${p1}" "\$${p2}"
+}
+FUNCDEF
+    fi
+}
+
+while IFS=' ' read -r name p1 p2 rhs; do
+    eval "$(build_func "$name" "$p1" "$p2" "$rhs")"
+done < funcs.txt
+
+# Part C: recursive descent prefix evaluator
+TOKENS=()
+IDX=0
+
+parse_val() {
+    if (( IDX >= ${#TOKENS[@]} )); then
+        echo "Error: unexpected end of input" >&2
+        exit 1
+    fi
+
+    local tok="${TOKENS[$IDX]}"
+    IDX=$(( IDX + 1 ))
+
+    if [[ $tok =~ ^-?[0-9]+$ ]]; then
+        PARSE_RESULT=$tok
+    else
+        if ! declare -f "$tok" > /dev/null; then
+            echo "Error: unknown function '$tok'" >&2
+            exit 1
+        fi
+
+        parse_val; local _a=$PARSE_RESULT
+        parse_val; local _b=$PARSE_RESULT
+        PARSE_RESULT=$("$tok" "$_a" "$_b")
+    fi
+}
+
+while IFS=' ' read -r line; do
+    read -ra TOKENS <<< "$line"
+    IDX=0
+    parse_val
+    echo "$line  =>  $PARSE_RESULT"
+done < calls.txt</code></pre>
+
+</section>
+
+</div><!-- /container -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>
