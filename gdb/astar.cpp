@@ -150,7 +150,7 @@ int main() {
     printf("A* cost:        %.4f\n", res.cost);
 
     if (std::abs(res.cost - dijk[dst]) > 1e-9)
-        printf("MISMATCH — A* is wrong!\n");
+        printf("MISMATCH: A* is wrong!\n");
     else
         printf("Results agree.\n");
 

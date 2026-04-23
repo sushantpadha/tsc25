@@ -1,6 +1,6 @@
 # GDB Workshop
 
-Four puzzles to motivate GDB. CTF flavour is optional — you don't need to solve them to learn the tools.
+Four puzzles to motivate GDB. Tried to add CTF flavour.
 
 ## Build
 

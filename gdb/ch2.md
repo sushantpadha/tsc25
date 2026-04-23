@@ -22,7 +22,7 @@ gdb ./ilikepie
 
 ## Story
 
-Jim compiled this binary as a Position Independent Executable — which means every time it runs, it loads at a *different address*. You can't just hardcode anything.
+Jim compiled this binary as a Position Independent Executable - which means every time it runs, it loads at a *different address*. You can't just hardcode anything.
 
 The binary is, however, *suspiciously helpful*. It tells you where it is. Figure out the rest.
 
@@ -30,7 +30,7 @@ GDB is your reconnaissance tool here. The actual exploit runs without GDB.
 
 ---
 
-## Part A — Recon
+## Part A - Recon
 
 ### What's in the binary?
 
@@ -58,7 +58,7 @@ Run it again. Do the addresses change? Run it five times. What *doesn't* change?
 
 ---
 
-## Part B — Disassembly
+## Part B - Disassembly
 
 Look at `main` in assembly:
 
@@ -82,7 +82,7 @@ Compute the offset. Is it positive or negative? Is it consistent across runs?
 
 ---
 
-## Part C — The exploit
+## Part C - The exploit
 
 Now run the binary *without* GDB:
 
@@ -100,9 +100,9 @@ Did it work? What printed?
 
 ---
 
-## Part D — Without GDB
+## Part D - Without GDB
 
-Can you find the offset using only static analysis — no running the binary at all?
+Can you find the offset using only static analysis - no running the binary at all?
 
 ```bash
 objdump -d ilikepie | grep -A5 "<main>"
@@ -127,7 +127,7 @@ Double-check your arithmetic. The offset can be negative (target is *before* mai
 <details>
 <summary>The program segfaults instead of printing the flag</summary>
 
-You may have jumped to a decoy. Go back to `info functions` and look more carefully — which function name sounds like it has something worth printing?
+You may have jumped to a decoy. Go back to `info functions` and look more carefully - which function name sounds like it has something worth printing?
 
 </details>
 

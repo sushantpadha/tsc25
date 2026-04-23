@@ -44,7 +44,7 @@ MISMATCH — A* is wrong!
 
 ## Story
 
-A* and Dijkstra run on the same graph. Dijkstra is correct by construction. A* disagrees. No crash, no assert — just a wrong answer. There are two bugs. Find them.
+A* and Dijkstra run on the same graph. Dijkstra is correct by construction. A* disagrees. There are two bugs. Find them.
 
 ---
 

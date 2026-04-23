@@ -1,8 +1,3 @@
-/*
- * Challenge 1: The Password Vault
- * Compile: gcc -O0 -g -no-pie password.c -o password
- */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

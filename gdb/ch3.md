@@ -33,16 +33,16 @@ A trading firm's order book is crashing in production. Two separate bugs. Your m
 ### Step 1: Run it
 
 ```bash
-./orderbook simple
+./orderbook simple < simple.txt
 ```
 
-It crashes. Note roughly where — how many orders were processed before things went wrong?
+It crashes. Note roughly where - how many orders were processed before things went wrong?
 
 ### Step 2: Find the crash in GDB
 
 ```bash
 gdb ./orderbook
-(gdb) r simple
+(gdb) r simple < simple.txt
 ```
 
 When it crashes:
@@ -63,7 +63,7 @@ Which pointer caused the fault? Where was it last assigned? Work *up* the call s
 
 ### Step 3: Find where the pointer is set
 
-Identify the variable. Find `insert()` in the source — this is where it's assigned. Set a breakpoint and watch it:
+Identify the variable. Find `insert()` in the source - this is where it's assigned. Set a breakpoint and watch it:
 
 ```
 (gdb) b SimpleOrderBook::insert
@@ -102,7 +102,7 @@ Fix Bug 1 (or just comment out `print_last()`), then run again. A different cras
 (gdb) bt
 ```
 
-The crash is deep. Walk up. At each frame — what are the arguments? Does the order that reaches the crash look correct to you?
+The crash is deep. Walk up. At each frame - what are the arguments? Does the order that reaches the crash look correct to you?
 
 ```
 (gdb) frame <crash frame>
@@ -127,14 +127,14 @@ What value is this? What *should* it be given the order's contents? Look at `val
 
 ## Story
 
-A refactor introduced derived order types. Now the book behaves strangely — wrong output, no crash. Two more bugs.
+A refactor introduced derived order types. Now the book behaves strangely - wrong output, no crash. Two more bugs.
 
 ---
 
 ## Bug 3
 
 ```bash
-./orderbook advanced
+./orderbook advanced < advanced.txt
 ```
 
 Look at the `[describe]` lines. Something's off about the types being reported.
@@ -142,7 +142,7 @@ Look at the `[describe]` lines. Something's off about the types being reported.
 ```bash
 gdb ./orderbook
 (gdb) b AdvancedOrderBook::describe_all
-(gdb) r advanced
+(gdb) r advanced < advanced.txt
 (gdb) n
 ```
 
@@ -197,7 +197,7 @@ These should never be equal. What happens when both objects are destroyed?
 
 ---
 
-## Part C — Disassembly
+## Part C - Disassembly
 
 ```
 (gdb) disas 'BaseOrder::BaseOrder(int, double, int)'
@@ -209,7 +209,7 @@ Find the instruction near the top that stores a value into `[rdi]` (the `this` p
 (gdb) disas 'LimitOrder::LimitOrder(int, double, int, bool)'
 ```
 
-Same instruction, different address. These point to different vtables — that's polymorphism at the machine level. When slicing happens, only the base vtable pointer gets written.
+Same instruction, different address. These point to different vtables - that's polymorphism at the machine level. When slicing happens, only the base vtable pointer gets written.
 
 ---
 
@@ -232,7 +232,7 @@ Look at the member being dereferenced in the crash frame. Then look at the same 
 <details>
 <summary>Bug 3: ptype says BaseOrder but I inserted a LimitOrder</summary>
 
-That's exactly the bug — you've confirmed it. Now find *where* the type is lost. The moment `push_back` copies the object, only the base subobject is preserved. The derived part is sliced off. This is called object slicing.
+That's exactly the bug - you've confirmed it. Now find *where* the type is lost. The moment `push_back` copies the object, only the base subobject is preserved. The derived part is sliced off. This is called object slicing.
 
 </details>
 

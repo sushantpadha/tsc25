@@ -7,6 +7,8 @@ Break in the steal the flag. There are 3 levels to this:
 2. Pro: Do not use the source file, but use the debug symbols provided by `-g` flag.
 3. Legend: assembly
 
+TLDR: Basic GDB-based control flow manipulation
+
 ---
 
 ## Setup
@@ -20,11 +22,11 @@ gdb ./password
 
 ## Story
 
-There's a flag locked behind a password. You don't know the password — and you don't need to. The goal isn't to find the password. The goal is to make the program *think* you did.
+There's a flag locked behind a password. You don't know the password - and you don't need to. The goal isn't to find the password. The goal is to make the program *think* you did.
 
 ---
 
-## Part A — Recon
+## Part A
 
 ### What's in here?
 
@@ -58,7 +60,7 @@ What do you see? Are any of these pointers? If so, what do they point to?
 
 ---
 
-## Part B — Control flow
+## Part B
 
 You've found the check. Now you need to *bypass* it. You dont need the password.
 
@@ -80,9 +82,9 @@ Did something happen? If not, think about what other breakpoints you should have
 
 ---
 
-## Part C — Read the flag
+## Part C
 
-You're now in the function that produces the flag. It doesn't print it immediately — it constructs it first.
+You're now in the function that produces the flag. It doesn't print it immediately - it constructs it first.
 
 Step through until the construction is done:
 
@@ -102,7 +104,7 @@ What's the difference in output format between `p` and `x/s`?
 
 ---
 
-## Part D — Read the assembly
+## Part D - Read the assembly
 
 This is where it gets real. Recompile stripped:
 
@@ -154,14 +156,14 @@ The flag will be somewhere in memory after the decryption. Find the `call` that 
 <details>
 <summary>I can't find the function that checks the password</summary>
 
-There's no function literally named `check_password` — look at what `main` calls. Every `call` instruction in `main`'s disassembly is a candidate. Try them all.
+There's no function literally named `check_password` - look at what `main` calls. Every `call` instruction in `main`'s disassembly is a candidate. Try them all.
 
 </details>
 
 <details>
 <summary>set $rax = 1 didn't work</summary>
 
-You need to be at the right moment — *after* `finish` returns you to the caller, *before* the `test`/`cmp` on `eax` executes. Step one instruction at a time with `ni` and watch when `eax` gets tested.
+You need to be at the right moment - *after* `finish` returns you to the caller, *before* the `test`/`cmp` on `eax` executes. Step one instruction at a time with `ni` and watch when `eax` gets tested.
 
 </details>
 
