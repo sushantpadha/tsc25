@@ -561,85 +561,450 @@ sed '$!N; /^\(.*\)\n\1$/!P; D' file             # remove consecutive duplicates
 
 ## awk
 
-#### Reading input w `getline`
-
-> **`getline [var] [< file]`** — reads next line from file into var (default: `$0` from current input)
-
-```
-$ awk '{ getline line < "-"; print line, length(line) }' <<EOF
-tooez
-ggs
-fly
-EOF
-```
-
-![awk-on-getline.png]
-
----
-
-#### Reading from a command
-
-**`cmd | getline var`** — reads one line at a time from command output; call `close(cmd)` to reset.
+> **Mental model:** awk reads input record by record (default: one line = one record). Each record splits into fields `$1 $2 ... $NF`. You write `pattern { action }` pairs — for each record, every matching pattern's action runs.
 
 ```bash
-while((cmd | getline line) > 0) { print line }   # idiomatic
+awk 'pattern { action }' file
+awk -F: '{ print $1 }' /etc/passwd           # -F sets field separator
+awk -v min=25 '$2 >= min { print $1 }' file  # -v passes shell var into awk
+awk -v OFS=, '{ print $1, $2 }' file         # -v sets any variable before BEGIN
+awk -f script.awk file                        # load program from file
 ```
 
-`getline` returns `1` (ok), `0` (EOF), `-1` (error).
+**`$0`** = whole record. **`$1..$NF`** = fields. Assigning to a field rewrites `$0`.
 
 ---
 
-#### Built-in Variables
+### Structure
+
+```bash
+awk '
+BEGIN   { # runs once before any input
+          FS = ":"
+          count = 0
+        }
+/ERROR/ { # pattern: runs for matching records only
+          count++
+        }
+        { # no pattern: runs for every record
+          print $1
+        }
+END     { # runs once after all input
+          print "total errors:", count
+        }
+' file
+```
+
+Patterns can be:
+- **regex** `/pat/` — match against `$0`
+- **comparison** `$2 > 100`
+- **range** `/start/, /end/` — inclusive, toggles on/off
+- **compound** `$1 == "foo" && NR > 5`
+- **none** — matches every record
+
+---
+
+### Built-in Variables
 
 | Variable | Meaning | Default |
 | --- | --- | --- |
-| **`NR`** | record number (global) | |
+| **`NR`** | record number (global, across all files) | |
 | **`NF`** | field count in current record | |
+| **`$0`** | whole current record | |
 | **`FS`** | input field separator | `" "` |
 | **`OFS`** | output field separator | `" "` |
 | `RS` | input record separator | `"\n"` |
 | `ORS` | output record separator | `"\n"` |
-| `FNR` | record number within current file | |
-| `FILENAME` | current file name | |
+| `FNR` | record number within current file (resets per file) | |
+| `FILENAME` | current input file name | |
 
 ---
 
-#### BEGIN / END
-
-```bash
-awk 'BEGIN { FS=":"; print "start" }
-     { sum += $1 }
-     END { print "total:", sum }' file
-
-awk 'BEGIN { FS=":" } { print $1 }' /etc/passwd   # same as -F":"
-```
-
----
-
-#### String Functions
-
-> [!note] Strings are **1-indexed**. Regex returns **longest leftmost match**.
-
-- **`length(s)`**, **`substr(s, start[, len])`**, **`index(s, find)`** (0 if not found)
-- **`tolower(s)`** / **`toupper(s)`**
-- **`split(s, arr, delim)`** — splits into array, returns count
-- **`gensub(re, repl, how[, target])`** — `how="g"` or integer; returns new string
-- **`match(s, re[, arr])`** — `arr[0]`=full match, `arr[1]`...=groups
-- **`patsplit(s, arr, pat)`** — like split but uses pattern
-- **`fflush()`** — flush output buffer
-
-**Rebuilding `$0`:**
-```bash
-$1=$1    # forces $0 to be rebuilt using OFS instead of original FS
-```
-
----
-
-#### FS Behavior
-
-![awk-on-fs.png]
+### FS Behavior
 
 - **`FS=" "`** (default) — split on runs of whitespace, trim leading/trailing
 - **`FS="x"`** (single char) — split on every occurrence; consecutive → empty fields
 - **`FS="regexp"`** — split on regex matches
-- **`FS=""`** — each character becomes its own field
+- **`FS=""`** — each character is its own field
+
+![awk-on-fs.png](./awk-on-fs.png)
+
+**Changing OFS + rebuilding `$0`:**
+```bash
+awk 'BEGIN{FS=","; OFS="|"} {$1=$1; print}' file   # rewrite CSV → pipe-delimited
+# $1=$1 forces $0 to be rebuilt with OFS
+```
+
+---
+
+### Arithmetic & Variables
+
+AWK variables are **untyped** — used as number or string depending on context. Uninitialized variables are `0` or `""`.
+
+**String concatenation** — juxtapose values, no operator needed:
+```bash
+awk '{ full = $1 " is a " $3; print full }' file
+awk '{ print $1 "_" $2 }' file
+```
+
+**Ternary operator:**
+```bash
+awk '{ label = ($2 >= 30) ? "senior" : "junior"; print $1, label }' file
+```
+
+**Math functions:** `sin(x)` `cos(x)` `atan2(y,x)` `exp(x)` `log(x)` `sqrt(x)` `int(x)` `rand()` `srand(seed)`
+
+```bash
+awk '{ sum += $1; count++ } END { print sum/count }' file   # average
+awk '{ if ($3 > max) max = $3 } END { print max }' file    # max of col 3
+awk 'NR%2 == 0 { print }' file                              # even lines only
+awk 'BEGIN { srand(); print int(rand()*100) }'              # random 0-99
+awk '{ print int($1) }' file                                # truncate to int
+```
+
+---
+
+### Arrays
+
+AWK arrays are **associative** (like hash maps). No declaration needed.
+
+```bash
+awk '{ count[$1]++ }
+     END { for (k in count) print k, count[k] }' file      # word/value frequency
+
+awk '{ seen[$0]++ } seen[$0] == 1 { print }' file          # remove duplicates
+
+awk 'NR==FNR { a[$0]=1; next }                             # line exists in file1?
+             { if ($0 in a) print }' file1 file2            # print common lines
+```
+
+- **`for (k in arr)`** — iterate keys (unordered)
+- **`delete arr[k]`** — delete a key
+- **`k in arr`** — test membership without creating entry (unlike `arr[k]`)
+- **`delete arr`** — clear entire array
+
+---
+
+### Patterns in Practice
+
+```bash
+awk 'NR==1'              file    # first line only
+awk 'NR>=5 && NR<=10'    file    # lines 5-10
+awk '$NF > 100'          file    # last field > 100
+awk '!/^#/'              file    # skip comment lines
+awk '/start/,/end/'      file    # range (inclusive)
+awk 'NR==FNR'            file    # true only while reading first file
+```
+
+---
+
+### printf
+
+Same as C. **Does not add newline automatically.**
+
+```bash
+awk '{ printf "%-15s %5d\n", $1, $2 }' file
+awk 'END { printf "%.2f\n", sum/count }' file
+```
+
+| Spec | Meaning |
+| --- | --- |
+| `%s` | string |
+| `%d` | integer |
+| `%f` / `%.2f` | float / 2 decimal places |
+| `%-10s` | left-align in 10 chars |
+| `%05d` | zero-pad |
+
+---
+
+### String Functions
+
+> [!note] Strings are **1-indexed**. Regex returns **longest leftmost match**.
+
+- **`length(s)`**
+- **`substr(s, start[, len])`**
+- **`index(s, find)`** — position of `find` in `s`; 0 if not found
+- **`tolower(s)`** / **`toupper(s)`**
+- **`split(s, arr, delim)`** — splits into array, returns count
+- **`sprintf(fmt, ...)`** — format string without printing; store in variable
+- **`sub(re, repl[, target])`** — replace first match in-place (default `$0`)
+- **`gsub(re, repl[, target])`** — replace all matches in-place; returns count
+- **`gensub(re, repl, how[, target])`** — like gsub but **returns new string**, supports `\1` back-refs; `how="g"` or integer
+- **`match(s, re[, arr])`** — sets `RSTART`/`RLENGTH`; with `arr`: `arr[0]`=full, `arr[1]`...=groups
+- **`patsplit(s, arr, pat)`** — split on pattern matches instead of delimiter
+
+```bash
+awk '{ gsub(/foo/, "bar"); print }' file             # in-place replace all
+awk '{ print gensub(/(\w+)/, "[\\1]", "g") }' file  # back-ref: wrap words in []
+awk '{ if (match($0, /[0-9]+/, m)) print m[0] }' file   # extract first number
+awk '{ s = sprintf("%-10s %d", $1, $2); print s }' file # format into variable
+```
+
+---
+
+### Other Built-ins
+
+**`system(cmd)`** — run a shell command; returns exit status
+```bash
+awk '{ system("mkdir -p " $1) }' dirs.txt        # create dirs from file
+awk 'BEGIN { ret = system("ls /tmp"); print ret }' # check exit status
+```
+
+**`systime()` + `strftime(fmt, ts)`** — unix timestamp and formatting
+```bash
+awk 'BEGIN { print systime() }'                               # current epoch
+awk 'BEGIN { print strftime("%Y-%m-%d %H:%M:%S", systime()) }'  # human readable
+awk '{ print strftime("%H:%M:%S", $1), $2 }' logfile         # format epoch col
+```
+
+**`ENVIRON["var"]`** — access shell environment variables
+```bash
+awk 'BEGIN { print ENVIRON["HOME"] }'
+awk -v user=$USER '$1 == user { print }' file   # same via -v
+```
+
+---
+
+### getline
+
+> **`getline [var] [< file]`** — reads next line from file into var (default `$0`). Updates `NR`/`NF` if reading from main input.
+
+![awk-on-getline.png](./awk-on-getline.png)
+
+```bash
+# read from a file inside awk
+awk '{ getline line < "other.txt"; print $0, line }' main.txt
+
+# read from a command
+awk '{ "date" | getline d; close("date"); print $0, d }' file
+
+# read next record from main input (skip lines)
+awk '{ getline; print }' file    # print every other line (the skipped one)
+```
+
+**Returns:** `1` (ok), `0` (EOF), `-1` (error).
+
+**`close(src)`** resets the file/command so next `getline` reads from the start again.
+
+Idiomatic command read:
+```bash
+while ((cmd | getline line) > 0) { print line }
+```
+
+---
+
+### Idiomatic One-liners
+
+```bash
+# print specific columns
+awk '{ print $1, $3 }' file
+
+# filter rows
+awk '$3 > 100' file
+awk '/pattern/' file
+
+# sum a column
+awk '{ sum += $2 } END { print sum }' file
+
+# count matching lines
+awk '/ERROR/ { count++ } END { print count }' file
+
+# print line numbers
+awk '{ print NR, $0 }' file
+
+# remove blank lines
+awk 'NF' file
+
+# print last field of each line
+awk '{ print $NF }' file
+
+# print lines between markers (exclusive)
+awk '/START/{found=1; next} /END/{found=0} found' file
+
+# transpose CSV
+awk -F, '{ for(i=1;i<=NF;i++) a[i]=a[i] (NR>1?",":"") $i }
+          END { for(i=1;i<=NF;i++) print a[i] }' file
+
+# frequency count + sort
+awk '{ count[$1]++ } END { for (k in count) print count[k], k }' file | sort -rn
+
+# join two files on first field
+awk 'NR==FNR { a[$1]=$2; next } $1 in a { print $0, a[$1] }' file1 file2
+
+# sed+awk pipeline: replace then process fields
+sed 's/,/ /g' data.csv | awk '{ print $2 }'
+```
+
+> [!note] **`awk 'NF'`** — `NF` is 0 for blank lines, which is falsy. Clean idiom for skipping empty lines.
+
+---
+
+### Data Types
+
+AWK has **two types**: strings and numbers. Variables are untyped — context decides.
+
+```bash
+x = "42"    # string
+x + 0       # now numeric 42
+x ""        # concatenate empty string → force string context
+```
+
+- Uninitialized variable = `0` (numeric) or `""` (string)
+- **Numeric strings** — values read from input that look like numbers compare numerically: `"10" > "9"` is true if both came from input fields; false if either is a string literal
+- **Arrays** are always associative; numeric indices are just string keys `"1"`, `"2"`, ...
+
+---
+
+### Operator Precedence (high → low)
+
+| Precedence | Operators | Notes |
+| --- | --- | --- |
+| highest | `( )` | grouping |
+| | `$` | field access |
+| | `^` | exponentiation (right-assoc) |
+| | `! - ++x --x` | unary |
+| | `x++ x--` | post-increment |
+| | `* / %` | |
+| | `+ -` | |
+| | `" "` (space) | **string concatenation** |
+| | `< > <= >= == != ~ !~` | relational + regex match |
+| | `in` | array membership |
+| | `&&` | |
+| | `\|\|` | |
+| | `?:` | ternary |
+| lowest | `= += -= ...` | assignment |
+
+> [!note] String concatenation via juxtaposition has **lower** precedence than arithmetic — `print a b+c` prints `a` then `b+c` as a string, not `(a b) + c`.
+
+---
+
+### Regex in AWK
+
+AWK uses **ERE** (extended regular expressions), same class as `egrep`.
+
+**Three forms:**
+
+```bash
+/pattern/           { action }   # match $0 against literal regex
+$2 ~ /pattern/      { action }   # field matches regex
+$2 !~ /pattern/     { action }   # field does NOT match
+```
+
+**Dynamic regex** — store pattern in variable:
+```bash
+awk -v pat="ERROR|WARN" '$0 ~ pat { print }' file
+```
+
+> [!warning] When regex is a **string variable**, backslashes need doubling: to match a literal dot use `"\\."` not `"\."`.
+
+**In functions** (`sub`, `gsub`, `gensub`, `match`, `split`):
+```bash
+gsub(/[0-9]+/, "NUM")           # literal regex — single backslash
+gsub("[0-9]+", "NUM")           # string regex — same here, but:
+gsub("\\.", "dot")              # match literal dot — must double backslash
+```
+
+**ERE syntax quick ref:**
+
+| Pattern | Meaning |
+| --- | --- |
+| `.` | any char except newline |
+| `*` `+` `?` | 0+, 1+, 0 or 1 |
+| `{n,m}` | repeat n to m times |
+| `^` `$` | start/end of record |
+| `[abc]` `[^abc]` | char class / negation |
+| `(a\|b)` | alternation |
+| `(pat)` | grouping (for `gensub` back-refs) |
+
+---
+
+### Field Separator Variants
+
+`FS` (or `-F`) can be:
+
+| Value | Behavior |
+| --- | --- |
+| `" "` (default) | split on **runs** of whitespace; trims leading/trailing |
+| `","` single char | split on every occurrence; consecutive → empty fields |
+| `"\t"` | tab-delimited |
+| `"[,;]"` | **character class** — any of `,` or `;` |
+| `":+"` | **regex** — one or more colons |
+| `""` | each individual character becomes a field |
+| `"\n"` | each line is one field (combine with `RS=""` for paragraph mode) |
+
+```bash
+awk -F'[,;|]'  '{ print $1 }' file       # any of those chars
+awk -F'\t'     '{ print $2 }' tsv        # tab-separated
+awk -F':+'     '{ print $1 }' file       # one or more colons
+awk 'BEGIN{ RS=""; FS="\n" } { print NF, $1 }' file  # paragraph mode
+```
+
+> [!note] `-F` is just shorthand for `-v FS=`. Setting `FS` in `BEGIN` is equivalent.
+
+---
+
+### Standard Variables — Complete Table
+
+| Variable | R/W | Meaning | Default |
+| --- | --- | --- | --- |
+| `NR` | R | total records read so far (global) | |
+| `NF` | R/W | field count; **assigning truncates or extends record** | |
+| `$0` | R/W | whole record; rebuilt when any field assigned | |
+| `$n` | R/W | nth field | |
+| `FS` | W | input field separator | `" "` |
+| `OFS` | W | output field separator (used when printing with `,`) | `" "` |
+| `RS` | W | input record separator | `"\n"` |
+| `ORS` | W | output record separator | `"\n"` |
+| `FNR` | R | record number within current file (resets per file) | |
+| `FILENAME` | R | current input filename | |
+| `ARGC` | R | number of command-line arguments | |
+| `ARGV` | R | array of command-line arguments | |
+| `ENVIRON` | R | associative array of shell env vars | |
+| `RSTART` | R | start position set by `match()` | |
+| `RLENGTH` | R | length of match set by `match()`; -1 if no match | |
+| `SUBSEP` | W | separator for multi-dim array keys | `\034` |
+| `OFMT` | W | format for printing numbers | `"%.6g"` |
+| `CONVFMT` | W | format for number→string conversion | `"%.6g"` |
+
+---
+
+### Quirks
+
+**`NF` is writable:**
+```bash
+awk '{ NF=3; print }' file     # truncate each record to 3 fields
+awk '{ NF++; $NF="new"; print }' file  # append a field
+```
+
+**Uninitialized array access creates the key:**
+```bash
+# BAD: this creates arr["x"] = "" as a side effect
+if (arr["x"]) { ... }
+# GOOD: use 'in' to test without creating
+if ("x" in arr) { ... }
+```
+
+**`print a, b` vs `print a b`:**
+- `print a, b` → `a OFS b ORS` (OFS between, default space)
+- `print a b` → concatenation, no separator
+
+**`RS` as regex (gawk only):**
+```bash
+awk 'BEGIN{RS="---\n"} { print NR, $0 }' file   # split on literal separator
+```
+
+**Numeric string comparison gotcha:**
+```bash
+# "10" > "9" depends on context
+awk 'BEGIN { if ("10" > "9") print "yes" }'   # NO — string compare, "1" < "9"
+awk 'BEGIN { if (10 > 9) print "yes" }'       # YES — numeric
+awk '$1 > 9 { print }' file                   # YES — $1 from input = numeric string
+```
+
+**`print` to file / pipe:**
+```bash
+awk '{ print $0 > "out.txt" }' file         # redirect (file stays open all run)
+awk '{ print $0 >> "out.txt" }' file        # append
+awk '{ print $0 | "sort" }' file            # pipe to command (one persistent pipe)
+awk '{ print $0 | "cat > " $1 ".txt" }' file  # dynamic filename via shell
+```
