@@ -10,6 +10,7 @@ TSC '26*
 - Some git explanation in [git.md](./bash/git.md), basically a decent summary of practical commands AND a humane treatment of the diff output syntax.
 
 - Find some GDB problems in [this README](./gdb/ERADME.md). Try for fun!
+    - Update, a very unpolished working set of notes on Make+GDB are in [gdb-make.md](./gdb/make-gdb.md).
 
 - Try some fun functional prog problems (originally in Bash but try Python as well! Lambdas, closures and late evaluation!) in [vrbo](./vrbo.html).
 
