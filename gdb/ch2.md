@@ -16,6 +16,8 @@ This is not a GDB question.
 ```bash
 gcc -O0 -g -pie -fPIE ilikepie.c -o ilikepie
 gdb ./ilikepie
+# first run: set disable-randomization off
+# in GDB
 ```
 
 ---
@@ -29,6 +31,9 @@ The binary is, however, *suspiciously helpful*. It tells you where it is. Figure
 GDB is your reconnaissance tool here. The actual exploit runs without GDB.
 
 ---
+
+## Note:
+Run `set disable-randomization off` in GDB, to ensure ASLR isn't disabled.
 
 ## Part A - Recon
 
