@@ -1,6 +1,6 @@
 # README
 
-TSC '26*
+Resources shared as a part of SSL TSC '26* - [@4N5Hadow](https://github.com/4N5Hadow/), [@sushantpadha](https://github.com/sushantpadha), [@ShanmathiVasudevan](https://github.com/ShanmathiVasudevan) - and some more cool things.
 
 - Working notes on Bash + Sed + Awk are in [bash-bash.md](./bash/bash-bash.md).
     - Update, some more info on read that the explanation (during the TSC) was lacking (Thanks @SahilDeo)
@@ -14,11 +14,15 @@ TSC '26*
 
 - Try some fun functional prog problems (originally in Bash but try Python as well! Lambdas, closures and late evaluation!) in [vrbo](./vrbo.html).
 
-- Some more (coz you guys wanted) numpy problems adapted from CS240 (aimless) Labs
+- Some more (coz you guys wanted) numpy problems adapted from CS240 (aimless) Labs; see [numpy-aiml/](./numpy-aiml/)
 
-- Ansh's Python slides [upcoming]
-- Shanmathi's Make slides [upcoming]
+- Ansh's Python slides [tut.pdf](./tut.pdf)
+
+- Shanmathi's Make + Git + Spreadsheet slides at [mission_ssl_tsc.pdf](./mission_ssl_tsc.pdf).
+    - Git pdf here [git.pdf](./git.pdf)
+    - Make code here [make/](./make/)
+    - Spreadsheets here [spreadsheets/](./spreadsheets/)
 
 ---
 
-If you're bored solve the [cse-bingo](./cse_bingo.png) (credit: TK).
+If you're bored solve the [cse-bingo](./cse_bingo.png) (credit: [TK](https://youtu.be/KMTuHpgqnLc)).
